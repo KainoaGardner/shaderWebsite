@@ -1,0 +1,87 @@
+html,
+head,
+body {
+  margin: 0;
+  padding: 15px;
+  background-color: #121212;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 600px;
+  height: 600px;
+  position: absolute;
+  background-color: red;
+  overflow: hidden;
+
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+}
+
+.canvas0 {
+  /* animation: moveOut 0.75s ease-in-out; */
+}
+
+.canvas1 {
+  left: 150%;
+  opacity: 0;
+  /* animation: moveIn 0.75s ease-in-out; */
+}
+
+@keyframes moveOut {
+  from {
+    left: 50%;
+    transform: translate(-50%, -50%) scale(100%);
+    opacity: 1;
+  }
+
+  to {
+    left: -50%;
+    transform: translate(-50%, -50%) scale(50%);
+    opacity: 0;
+  }
+
+}
+
+@keyframes moveIn {
+  from {
+    left: 125%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(50%);
+  }
+
+  to {
+    left: 50%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(100%);
+  }
+
+}
+
+.slider {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translate(0%, -50%);
+  width: 90%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: middle;
+
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.arrow {
+  width: 100px;
+  height: 100px;
+  border: solid 1px white;
+}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/imgs/shaders.svg">
+  <link rel="stylesheet" href="/css/index.css">
+  <title>shaderWebsite</title>
+</head>
+
+<body>
+  <div class="slider">
+    <div class="items">
+      <div class="item">
+        <canvas class="canvas canvas0" id="canvas0"></canvas>
+      </div>
+      <div class="item">
+        <canvas class="canvas canvas1" id="canvas1"></canvas>
+      </div>
+
+    </div>
+
+    <div class="nav">
+      <div class="button prev">
+        <svg viewBox="0 0 24 24" class="arrow" id="prevArrow">
+          <path d="M15.293 3.293 6.586 12l8.707 8.707 1.414-1.414L9.414 12l7.293-7.293-1.414-1.414z" />
+        </svg>
+      </div>
+
+      <div class="button next">
+        <svg viewBox="0 0 24 24" class="arrow" id="nextArrow">
+          <path d="M7.293 4.707 14.586 12l-7.293 7.293 1.414 1.414L17.414 12 8.707 3.293 7.293 4.707z" />
+        </svg>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
