@@ -1,3 +1,22 @@
+export const FRAGMENT_SHADER = `#version 300 es
+precision mediump float;
+
+out vec4 outputColor;
+
+in vec2 vTexCoord;
+
+uniform vec2 uResolution;
+uniform vec2 uMouse;
+uniform float uTime;
+
+uniform sampler2D uImage;
+
+
+void main(){
+	outputColor = texture(uImage,vTexCoord);
+}`
+
+
 export const SIERPINSKI_CARPET_FRAGMENT_SHADER = `#version 300 es
 precision mediump float;
 
