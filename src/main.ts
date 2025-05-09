@@ -53,21 +53,34 @@ function main() {
   });
 
 
-  const testShader = createDoubleShader(gl0, gl1,
+  const waveShader = createDoubleTextureShader(gl0, gl1,
     Geometry.SQUARE_VERTICES,
     Geometry.SQUARE_INDICES,
-    VERTEX.SQUARE_VERTEX_SHADER,
-    FRAGMENT.FRAGMENT_SHADER,
-    [true, false, false],
+    Geometry.TEXTURE_VERTICES,
+    Geometry.TEXTURE_INDICES,
+    VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
+    FRAGMENT.WAVE_FRAGMENT_SHADER,
+    [false, true, false, false],
+    0,
   );
 
+  const muyBridgeShader = createDoubleTextureShader(gl0, gl1,
+    Geometry.SQUARE_VERTICES,
+    Geometry.SQUARE_INDICES,
+    Geometry.TEXTURE_VERTICES,
+    Geometry.TEXTURE_INDICES,
+    VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
+    FRAGMENT.MUY_BRIDGE_FRAGMENT_SHADER,
+    [false, true, false, false],
+    1,
+  );
 
   const sierpinskiCarpetShader = createDoubleShader(gl0, gl1,
     Geometry.SQUARE_VERTICES,
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.SIERPINSKI_CARPET_FRAGMENT_SHADER,
-    [true, true, false],
+    [true, true, false, false],
   );
 
   const moveGridShader = createDoubleShader(gl0, gl1,
@@ -75,7 +88,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.MOVE_GRID_FRAGMENT_SHADER,
-    [true, true, false],
+    [true, true, false, false],
   );
 
   const colorPickerShader = createDoubleShader(gl0, gl1,
@@ -83,7 +96,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.COLOR_PICKER_FRAGMENT_SHADER,
-    [true, false, true],
+    [true, false, true, false],
   );
 
   const noise1DCircleShader = createDoubleShader(gl0, gl1,
@@ -91,7 +104,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.NOISE_1D_FRAGMENT_SHADER,
-    [true, true, false],
+    [true, true, false, false],
   );
 
   const noiseCircleShader = createDoubleShader(gl0, gl1,
@@ -99,7 +112,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.NOISE_CIRCLE_FRAGMENT_SHADER,
-    [true, true, false],
+    [true, true, false, false],
   );
 
   const bloodCellShader = createDoubleShader(gl0, gl1,
@@ -107,10 +120,11 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.BLOOD_CELL_FRAGMENT_SHADER,
-    [true, true, true],
+    [true, true, true, false],
   );
 
-  addShader(shaders, testShader)
+  addShader(shaders, muyBridgeShader)
+  addShader(shaders, waveShader)
   addShader(shaders, sierpinskiCarpetShader)
   addShader(shaders, moveGridShader)
   addShader(shaders, colorPickerShader)
@@ -174,25 +188,34 @@ function createDoubleTextureShader(
   gl1: WebGL2RenderingContext,
   vertices: Float32Array,
   vertexIndices: Uint16Array,
+  textureVertices: Float32Array,
+  textureIndices: Uint16Array,
   vertexShaderSource: string,
   fragmentShaderSource: string,
   uniforms: Boolean[],
+  imageIndex: number
 ): doubleShader | null {
 
-  const shader0 = createShader(gl0,
+  const shader0 = createTextureShader(gl0,
     vertices,
     vertexIndices,
+    textureVertices,
+    textureIndices,
     vertexShaderSource,
     fragmentShaderSource,
     uniforms,
+    imageIndex,
   );
 
-  const shader1 = createShader(gl1,
+  const shader1 = createTextureShader(gl1,
     vertices,
     vertexIndices,
+    textureVertices,
+    textureIndices,
     vertexShaderSource,
     fragmentShaderSource,
     uniforms,
+    imageIndex,
   );
 
   if (!shader0 || !shader1) {
@@ -238,7 +261,7 @@ function createShader(
   }
 
 
-  const uniformLocations: WebGLUniformLocation[] | null[] = new Array(4);
+  const uniformLocations: WebGLUniformLocation[] | null[] = new Array(5).fill(null);
 
   if (uniforms[0]) {
     const canvasSizeUniform = gl.getUniformLocation(program, "uResolution")
@@ -269,7 +292,7 @@ function createShader(
 
   uniformLocations[3] = null
 
-  const shader: shader = { gl: gl, vao: vao, indicesLength: vertexIndices.length, program: program, uniform: uniformLocations };
+  const shader: shader = { gl: gl, vao: vao, indicesLength: vertexIndices.length, program: program, uniform: uniformLocations, imageIndex: 0 };
   return shader
 }
 
@@ -282,7 +305,7 @@ function createTextureShader(
   vertexShaderSource: string,
   fragmentShaderSource: string,
   uniforms: Boolean[],
-  image: HTMLImageElement,
+  imageIndex: number,
 ): shader | null {
 
   const vertexBuffer = createStaticVertexBuffer(gl, vertices);
@@ -334,7 +357,7 @@ function createTextureShader(
   }
 
 
-  const uniformLocations: WebGLUniformLocation[] = new Array(4);
+  const uniformLocations: WebGLUniformLocation[] = new Array(5).fill(null);
 
   if (uniforms[0]) {
     const canvasSizeUniform = gl.getUniformLocation(program, "uResolution")
@@ -369,20 +392,35 @@ function createTextureShader(
     return null;
   }
 
-  uniformLocations[2] = imageUniform;
+  uniformLocations[3] = imageUniform;
+
+  if (uniforms[3]) {
+    const imageResolutionUniform = gl.getUniformLocation(program, "uImageResolution")
+    if (imageResolutionUniform === null) {
+      console.error("Could not find image resolution uniform")
+      return null;
+    }
+
+    uniformLocations[4] = imageResolutionUniform
+  }
 
   const texture = gl.createTexture();
-  gl.activeTexture(gl.TEXTURE0 + 0);
+  gl.activeTexture(gl.TEXTURE0 + imageIndex);
   gl.bindTexture(gl.TEXTURE_2D, texture)
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, images[imageIndex])
 
-  const shader: textureShader = { gl: gl, vao: vao, indicesLength: vertexIndices.length, program: program, uniform: uniformLocations };
+  const shader: shader = { gl: gl, vao: vao, indicesLength: vertexIndices.length, program: program, uniform: uniformLocations, imageIndex: imageIndex };
   return shader
 }
 
@@ -480,8 +518,14 @@ function drawShader(
   }
 
   if (currShader.uniform[3]) {
-    gl.uniform1i(currShader.uniform[3], 0);
+    gl.uniform1i(currShader.uniform[3], currShader.imageIndex);
   }
+
+  if (currShader.uniform[4]) {
+    const image = images[currShader.imageIndex]
+    gl.uniform2f(currShader.uniform[4], image.width, image.height);
+  }
+
 
   gl.bindVertexArray(currShader.vao)
   gl.drawElements(gl.TRIANGLES, currShader.indicesLength, gl.UNSIGNED_SHORT, 0);
@@ -491,18 +535,28 @@ function drawShader(
 
 const images: HTMLImageElement[] = [];
 function setup() {
+  loadImage("./imgs/wave.jpg")
+  loadImage("./imgs/muybridge.jpg")
+  loadImage("./imgs/flower.jpeg")
+}
+
+function checkImagesLoaded() {
+  if (images.length === 3) {
+    main()
+  }
+}
+
+function loadImage(source: string) {
   const image = new Image();
   if (!image) {
     console.error("Could not load image")
     return
   }
-  image.src = "./imgs/wave.jpg"
+  image.src = source
   image.onload = function() {
     images.push(image);
-    console.log(image)
-    main();
+    checkImagesLoaded();
   }
-
 }
 
 

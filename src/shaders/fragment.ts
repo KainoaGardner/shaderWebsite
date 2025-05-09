@@ -1,4 +1,4 @@
-export const FRAGMENT_SHADER = `#version 300 es
+export const WAVE_FRAGMENT_SHADER = `#version 300 es
 precision mediump float;
 
 out vec4 outputColor;
@@ -11,9 +11,60 @@ uniform float uTime;
 
 uniform sampler2D uImage;
 
+vec2 rotateCenter(vec2 pos,float a){
+  pos -= 0.5;
+  mat2 rotMat = mat2(cos(a),-sin(a),sin(a),cos(a));
+  pos *= rotMat;
+  pos += 0.5;
+  return pos;
+}
 
 void main(){
-	outputColor = texture(uImage,vTexCoord);
+  vec2 uv = vec2(vTexCoord.x,1.0 - vTexCoord.y);
+  uv += vec2(uTime,0.0);
+  // uv = rotateCenter(uv,uTime);
+  outputColor = texture(uImage,uv);
+}`
+
+export const MUY_BRIDGE_FRAGMENT_SHADER = `#version 300 es
+precision mediump float;
+
+out vec4 outputColor;
+
+in vec2 vTexCoord;
+
+uniform vec2 uResolution;
+uniform vec2 uMouse;
+uniform float uTime;
+uniform vec2 uImageResolution;
+
+uniform sampler2D uImage;
+
+
+
+vec2 rotateCenter(vec2 pos,float a){
+  pos -= 0.5;
+  mat2 rotMat = mat2(cos(a),-sin(a),sin(a),cos(a));
+  pos *= rotMat;
+  pos += 0.5;
+  return pos;
+}
+
+void main(){
+  vec2 gridSize = vec2(5.0,4.0);
+  vec2 uv = vec2(vTexCoord.x,1.0 - vTexCoord.y);
+  uv = rotateCenter(uv,uTime);
+  
+  uv /= gridSize;
+
+  float timeX = uTime * 10.0;
+  float timeY = floor(timeX / gridSize.x);
+  vec2 offset = vec2(floor(timeX) / gridSize.x,floor(timeY) / gridSize.y);
+  
+  uv = fract(uv + offset);
+
+  vec4 color = texture(uImage,uv);
+  outputColor = vec4(color.rgb,color.a);
 }`
 
 
@@ -27,41 +78,41 @@ uniform float uTime;
 
 const int maxIterations=6;
 
-// vec2 rot(vec2 uv,float a){
-// 	return vec2(uv.x*cos(a)-uv.y*sin(a),uv.y*cos(a)+uv.x*sin(a));
+// vec2 rot(vec2 pos,float a){
+// 	return vec2(pos.x*cos(a)-pos.y*sin(a),pos.y*cos(a)+pos.x*sin(a));
 // }
 
-vec2 rotateCenter(vec2 uv,float a){
-  uv -= 0.5;
+vec2 rotateCenter(vec2 pos,float a){
+  pos -= 0.5;
   mat2 rotMat = mat2(cos(a),-sin(a),sin(a),cos(a));
-  uv *= rotMat;
-  uv += 0.5;
-  return uv;
+  pos *= rotMat;
+  pos += 0.5;
+  return pos;
 }
 
 void main(){
-  vec2 uv = gl_FragCoord.xy / uResolution;
+  vec2 pos = gl_FragCoord.xy / uResolution;
 
   float t = uTime * 0.5;
-  uv = rotateCenter(uv,t);
+  pos = rotateCenter(pos,t);
 
   float zoomAmount = mod(t * 0.5,1.0);
   float scale = pow(3.0,zoomAmount);
   vec2 targetTile = vec2(1.0);
-  uv = (uv - targetTile) / scale + targetTile;
+  pos = (pos - targetTile) / scale + targetTile;
 
   vec3 color = vec3(1.0);
 
-  vec2 hole = step(1.0 / 3.0,uv) - step(2.0 / 3.0,uv);
+  vec2 hole = step(1.0 / 3.0,pos) - step(2.0 / 3.0,pos);
   float result = hole.x * hole.y;
   for (int i = 0;i < maxIterations;i++){
-    uv = fract(uv);
-    hole = step(1.0 / 3.0,uv) - step(2.0 / 3.0,uv);
+    pos = fract(pos);
+    hole = step(1.0 / 3.0,pos) - step(2.0 / 3.0,pos);
     result = hole.x * hole.y;
     if (result == 1.0){
       break;
     }
-    uv *= 3.0;
+    pos *= 3.0;
   }
 
   color = mix(vec3(0.0),color,result);
@@ -149,6 +200,9 @@ void main() {
   vec2 position = gl_FragCoord.xy / uResolution;
   vec2 mousePos = uMouse / uResolution;
 
+  float pickerSize = 0.1;
+  float pickerBorderSize = 0.005;
+
   vec2 toCenter = vec2(0.5) - position;
   float angleToCenter = atan(toCenter.y, toCenter.x);
   float radius = length(toCenter) * 2.0;
@@ -161,8 +215,8 @@ void main() {
   vec3 mouseColor = hsb2rgb(vec3(mouseNormalizedAngle, mouseRadius, 1.0));
 
   float distanceToMouse = distance(position, mousePos);
-  float closePercent = step(0.08, distanceToMouse);
-  float edgePercent = step(0.08, distanceToMouse) - step(0.085, distanceToMouse);
+  float closePercent = step(pickerSize, distanceToMouse);
+  float edgePercent = step(pickerSize, distanceToMouse) - step(pickerSize + pickerBorderSize, distanceToMouse);
 
   vec3 color = hsb2rgb(vec3(normalizedAngle, radius, 1.0));
   

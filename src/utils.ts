@@ -82,7 +82,8 @@ export interface shader {
   vao: WebGLVertexArrayObject;
   indicesLength: number;
   program: WebGLProgram;
-  uniform: WebGLUniformLocation[] | null[]; //0=canvasSize,1=timePassed,2=mousePos,3=image
+  uniform: WebGLUniformLocation[] | null[]; //0=canvasSize,1=timePassed,2=mousePos,3=image,4=imageRes
+  imageIndex: number;
 }
 
 export interface mousePos {

@@ -17,7 +17,7 @@ export const TEXTURE_VERTICES = new Float32Array([
   0.0, 1.0,
 ]);
 
-export const TEXTURE_INDICES = new Float32Array([
+export const TEXTURE_INDICES = new Uint16Array([
   0, 1, 2,
   0, 2, 3
 ]);
