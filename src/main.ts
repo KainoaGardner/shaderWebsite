@@ -53,6 +53,17 @@ function main() {
   });
 
 
+  const waldoShader = createDoubleTextureShader(gl0, gl1,
+    Geometry.SQUARE_VERTICES,
+    Geometry.SQUARE_INDICES,
+    Geometry.TEXTURE_VERTICES,
+    Geometry.TEXTURE_INDICES,
+    VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
+    FRAGMENT.WALDO_FRAGMENT_SHADER,
+    [true, false, true, false],
+    3,
+  );
+
   const waveShader = createDoubleTextureShader(gl0, gl1,
     Geometry.SQUARE_VERTICES,
     Geometry.SQUARE_INDICES,
@@ -123,6 +134,7 @@ function main() {
     [true, true, true, false],
   );
 
+  addShader(shaders, waldoShader)
   addShader(shaders, muyBridgeShader)
   addShader(shaders, waveShader)
   addShader(shaders, sierpinskiCarpetShader)
@@ -538,10 +550,11 @@ function setup() {
   loadImage("./imgs/wave.jpg")
   loadImage("./imgs/muybridge.jpg")
   loadImage("./imgs/flower.jpeg")
+  loadImage("./imgs/waldo.png")
 }
 
 function checkImagesLoaded() {
-  if (images.length === 3) {
+  if (images.length === 4) {
     main()
   }
 }
