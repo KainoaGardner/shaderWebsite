@@ -53,6 +53,15 @@ function main() {
   });
 
 
+  const clockShader = createDoubleShader(gl0, gl1,
+    Geometry.SQUARE_VERTICES,
+    Geometry.SQUARE_INDICES,
+    VERTEX.SQUARE_VERTEX_SHADER,
+    FRAGMENT.CLOCK_FRAGMENT_SHADER,
+    [true, false, false, false, true],
+  );
+
+
   const waldoShader = createDoubleTextureShader(gl0, gl1,
     Geometry.SQUARE_VERTICES,
     Geometry.SQUARE_INDICES,
@@ -60,7 +69,7 @@ function main() {
     Geometry.TEXTURE_INDICES,
     VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
     FRAGMENT.WALDO_FRAGMENT_SHADER,
-    [true, false, true, false],
+    [true, false, true, false, false],
     3,
   );
 
@@ -71,7 +80,7 @@ function main() {
     Geometry.TEXTURE_INDICES,
     VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
     FRAGMENT.WAVE_FRAGMENT_SHADER,
-    [false, true, false, false],
+    [false, true, false, false, false],
     0,
   );
 
@@ -82,7 +91,7 @@ function main() {
     Geometry.TEXTURE_INDICES,
     VERTEX.SQUARE_TEXTURE_VERTEX_SHADER,
     FRAGMENT.MUY_BRIDGE_FRAGMENT_SHADER,
-    [false, true, false, false],
+    [false, true, false, false, false],
     1,
   );
 
@@ -91,7 +100,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.SIERPINSKI_CARPET_FRAGMENT_SHADER,
-    [true, true, false, false],
+    [true, true, false, false, false],
   );
 
   const moveGridShader = createDoubleShader(gl0, gl1,
@@ -99,7 +108,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.MOVE_GRID_FRAGMENT_SHADER,
-    [true, true, false, false],
+    [true, true, false, false, false],
   );
 
   const colorPickerShader = createDoubleShader(gl0, gl1,
@@ -107,7 +116,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.COLOR_PICKER_FRAGMENT_SHADER,
-    [true, false, true, false],
+    [true, false, true, false, false],
   );
 
   const noise1DCircleShader = createDoubleShader(gl0, gl1,
@@ -115,7 +124,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.NOISE_1D_FRAGMENT_SHADER,
-    [true, true, false, false],
+    [true, true, false, false, false],
   );
 
   const noiseCircleShader = createDoubleShader(gl0, gl1,
@@ -123,7 +132,7 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.NOISE_CIRCLE_FRAGMENT_SHADER,
-    [true, true, false, false],
+    [true, true, false, false, false],
   );
 
   const bloodCellShader = createDoubleShader(gl0, gl1,
@@ -131,9 +140,10 @@ function main() {
     Geometry.SQUARE_INDICES,
     VERTEX.SQUARE_VERTEX_SHADER,
     FRAGMENT.BLOOD_CELL_FRAGMENT_SHADER,
-    [true, true, true, false],
+    [true, true, true, false, false],
   );
 
+  addShader(shaders, clockShader)
   addShader(shaders, waldoShader)
   addShader(shaders, muyBridgeShader)
   addShader(shaders, waveShader)
@@ -273,7 +283,7 @@ function createShader(
   }
 
 
-  const uniformLocations: WebGLUniformLocation[] | null[] = new Array(5).fill(null);
+  const uniformLocations: WebGLUniformLocation[] | null[] = new Array(6).fill(null);
 
   if (uniforms[0]) {
     const canvasSizeUniform = gl.getUniformLocation(program, "uResolution")
@@ -302,7 +312,14 @@ function createShader(
     uniformLocations[2] = mousePosUniform;
   }
 
-  uniformLocations[3] = null
+  if (uniforms[4]) {
+    const currTimeUniform = gl.getUniformLocation(program, "uCurrTime")
+    if (currTimeUniform === null) {
+      console.error("Could not find curr time uniform")
+      return null;
+    }
+    uniformLocations[5] = currTimeUniform;
+  }
 
   const shader: shader = { gl: gl, vao: vao, indicesLength: vertexIndices.length, program: program, uniform: uniformLocations, imageIndex: 0 };
   return shader
@@ -369,7 +386,7 @@ function createTextureShader(
   }
 
 
-  const uniformLocations: WebGLUniformLocation[] = new Array(5).fill(null);
+  const uniformLocations: WebGLUniformLocation[] = new Array(6).fill(null);
 
   if (uniforms[0]) {
     const canvasSizeUniform = gl.getUniformLocation(program, "uResolution")
@@ -414,6 +431,15 @@ function createTextureShader(
     }
 
     uniformLocations[4] = imageResolutionUniform
+  }
+
+  if (uniforms[4]) {
+    const currTimeUniform = gl.getUniformLocation(program, "uCurrTime")
+    if (currTimeUniform === null) {
+      console.error("Could not find curr time uniform")
+      return null;
+    }
+    uniformLocations[5] = currTimeUniform;
   }
 
   const texture = gl.createTexture();
@@ -538,6 +564,10 @@ function drawShader(
     gl.uniform2f(currShader.uniform[4], image.width, image.height);
   }
 
+  if (currShader.uniform[5]) {
+    const currTime = new Date();
+    gl.uniform3f(currShader.uniform[5], currTime.getHours(), currTime.getMinutes(), currTime.getSeconds());
+  }
 
   gl.bindVertexArray(currShader.vao)
   gl.drawElements(gl.TRIANGLES, currShader.indicesLength, gl.UNSIGNED_SHORT, 0);
@@ -550,7 +580,7 @@ function setup() {
   loadImage("./imgs/wave.jpg")
   loadImage("./imgs/muybridge.jpg")
   loadImage("./imgs/flower.jpeg")
-  loadImage("./imgs/waldo.png")
+  loadImage("./imgs/waldo.jpeg")
 }
 
 function checkImagesLoaded() {
