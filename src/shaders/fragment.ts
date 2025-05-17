@@ -7,6 +7,9 @@ uniform vec2 uResolution;
 uniform vec2 uMouse;
 uniform float uTime;
 uniform vec3 uCurrTime; //hr,min,sec
+ 
+
+#define TWO_PI 6.28318530718
 
 float bin(vec2 iPos, float n){
   float remain = mod(n,33554432.);
@@ -52,8 +55,36 @@ float char(vec2 st,float n, vec2 scale,vec2 translate){
   
 }
 
+vec2 rotateCenter(vec2 pos,float a){
+  pos -= 0.5;
+  mat2 rotMat = mat2(cos(a),-sin(a),sin(a),cos(a));
+  pos *= rotMat;
+  pos += 0.5;
+  return pos;
+}
+
+vec2 rectangle(vec2 pos,vec2 size,vec2 translate){
+  translate += 0.5;
+  size /= 2.0;
+  vec2 result = step(translate - size,pos) - step(translate + size,pos);
+  return result;
+}
+ 
+float circle(vec2 pos,vec2 translate,float radius){
+  translate += 0.5;
+  float dist = distance(pos,translate);
+  float result = step(dist,radius);
+  return result;
+}
+
 void main(){
   vec2 st = gl_FragCoord.xy / uResolution;
+  vec3 color = vec3(0.0);
+
+  vec2 circleTranslate = vec2(0.0);
+  float circleResult = circle(st,circleTranslate,0.5);
+  vec3 circleColor = vec3(0.8);
+  color = mix(color,circleColor,circleResult);
 
   float sec = mod(uCurrTime.z,60.);
   float min = mod(uCurrTime.y,60.);
@@ -100,13 +131,37 @@ void main(){
   float colonPct = char(fPos,10.,scale,translate);
   colonPct *= mod(iPos.x + 1.,2.) * (step(2.,iPos.x) - step(5.,iPos.x));
 
-  vec3 color = vec3(charPct + colonPct);
+  vec3 charResult = vec3(charPct + colonPct);
+  vec3 charColor = vec3(0.0);
+  
+  color = mix(color,charColor,charResult);
   // vec3 color = vec3(charPct);
 
+  vec2 st2 = gl_FragCoord.xy / uResolution;
+ 
+  st2 = rotateCenter(st2,hour *  (TWO_PI / 12.0));
+  vec2 rectScale = vec2(0.05,0.2);
+  vec2 rectTranslate = vec2(0.0,0.1);
+  vec2 rectResult = rectangle(st2,rectScale,rectTranslate);
+  vec3 clockHourColor = vec3(0.2,0.2,0.2);
+  color = mix(color,clockHourColor,rectResult.x * rectResult.y);
   
-  vec2 st0 = gl_FragCoord.xy / uResolution;
+  vec2 st1 = gl_FragCoord.xy / uResolution;
+  st1 = rotateCenter(st1,min *  (TWO_PI / 60.0));
+   rectScale = vec2(0.03,0.4);
+   rectTranslate = vec2(0.0,0.2);
+   rectResult = rectangle(st1,rectScale,rectTranslate);
+  vec3 clockMinColor = vec3(0.5,0.5,0.5);
+  color = mix(color,clockMinColor,rectResult.x * rectResult.y);
 
-  //do the clock hands code here
+  vec2 st0 = gl_FragCoord.xy / uResolution;
+  st0 = rotateCenter(st0,sec *  (TWO_PI / 60.0));
+  rectScale = vec2(0.01,0.45);
+  rectTranslate = vec2(0.0,0.225);
+  rectResult = rectangle(st0,rectScale,rectTranslate);
+  vec3 clockSecColor = vec3(1.0,0.0,0.0);
+
+  color = mix(color,clockSecColor,rectResult.x * rectResult.y);
   outputColor = vec4(color,1.0);
 }`
 
